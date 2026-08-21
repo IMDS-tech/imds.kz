@@ -1,0 +1,6 @@
+import fs from 'node:fs';import path from 'node:path';
+export type BlogPost={slug:string;title:string;excerpt:string;publishedAt:string;category:string;author:string;seoDescription:string;body:string};
+const dir=path.join(process.cwd(),'content/blog');
+function parseFile(file:string):BlogPost{const raw=fs.readFileSync(path.join(dir,file),'utf8');const parts=raw.split('---');if(parts.length<3)throw new Error(`Invalid front matter: ${file}`);const meta=Object.fromEntries(parts[1].trim().split('\n').map(line=>{const i=line.indexOf(':');return [line.slice(0,i).trim(),line.slice(i+1).trim()]}));for(const key of ['slug','title','excerpt','publishedAt','category','author','seoDescription'])if(!meta[key])throw new Error(`Missing ${key}: ${file}`);if(Number.isNaN(Date.parse(meta.publishedAt)))throw new Error(`Invalid date: ${file}`);return {...meta,body:parts.slice(2).join('---').trim()} as BlogPost}
+export function getAllPosts(){if(!fs.existsSync(dir))return [];const posts=fs.readdirSync(dir).filter(f=>f.endsWith('.md')).map(parseFile);if(new Set(posts.map(p=>p.slug)).size!==posts.length)throw new Error('Duplicate blog slug');return posts.sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt))}
+export function getPostBySlug(slug:string){return getAllPosts().find(p=>p.slug===slug)}

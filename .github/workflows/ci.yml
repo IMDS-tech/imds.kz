@@ -1,6 +1,8 @@
 name: Public Website CI
 on:
   pull_request:
+  push:
+    branches: [main]
 permissions:
   contents: read
 jobs:
