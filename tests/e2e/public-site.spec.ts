@@ -20,6 +20,12 @@ test('critical public journey', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Запросить демо' })).toHaveAttribute('href', '/contact');
 });
 
+test('home exposes the hybrid 3d experience', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByTestId('ecosystem-webgl')).toBeVisible();
+  await expect(page.locator('[data-3d-card="true"]')).toHaveCount(7);
+});
+
 test('mobile navigation opens', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
