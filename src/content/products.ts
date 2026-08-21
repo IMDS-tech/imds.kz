@@ -3,11 +3,11 @@ import type { ProductSlug } from '@/lib/site-config';
 export type ProductDefinition = {
   slug: ProductSlug; name: string; eyebrow: string; headline: string; summary: string;
   problem: string; solution: string; capabilities: string[]; workflow: string[]; outcomes: string[];
-  platformIntegration: string[]; faq: {q:string;a:string}[]; accent: string; appUrl?: string;
+  platformIntegration: string[]; faq: {q:string;a:string}[]; accent: string; logoPath: string; appUrl?: string;
 };
 
 const p = (slug: ProductSlug, name: string, eyebrow: string, headline: string, summary: string, capabilities: string[], accent: string, appUrl?: string): ProductDefinition => ({
-  slug,name,eyebrow,headline,summary,accent,appUrl,
+  slug,name,eyebrow,headline,summary,accent,logoPath:`/product-logos/${slug}.png`,appUrl,
   problem: `Разрозненные процессы усложняют управление и замедляют принятие решений в зоне ответственности ${name}.`,
   solution: `${name} объединяет ключевые операции в одном продукте и работает как часть общей экосистемы IMDS.`,
   capabilities,
