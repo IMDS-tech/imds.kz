@@ -18,4 +18,10 @@ describe('product navigation', () => {
       expect(productActionHref(productsBySlug[slug])).toBe('/contact');
     }
   });
+
+  it('assigns a dedicated transparent logo asset to every product', () => {
+    for (const slug of ['beles', 'mis', 'resto', 'omnichannel', 'analytics', 'ai', 'finance'] as const) {
+      expect(productsBySlug[slug].logoPath).toBe(`/product-logos/${slug}.png`);
+    }
+  });
 });
