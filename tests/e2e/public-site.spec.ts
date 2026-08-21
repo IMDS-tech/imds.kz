@@ -5,13 +5,16 @@ test('critical public journey', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
   await page.getByRole('link', { name: 'Смотреть продукты' }).click();
 
-  await expect(page.getByRole('link', { name: 'BELES' }).first()).toHaveAttribute('href', 'https://beles.imds.kz');
-  await expect(page.getByRole('link', { name: 'MIS' }).first()).toHaveAttribute('href', 'https://mis.imds.kz');
+  await expect(page.getByRole('link', { name: 'BELES' }).first()).toHaveAttribute('href', '/products/beles');
+  await expect(page.getByRole('link', { name: 'MIS' }).first()).toHaveAttribute('href', '/products/mis');
 
-  await page.getByRole('link', { name: 'IMDS Resto' }).first().click();
-  await expect(page).toHaveURL(/products\/resto/);
-  await page.getByRole('link', { name: 'Запросить демо' }).click();
-  await expect(page).toHaveURL(/contact/);
+  await page.getByRole('link', { name: 'BELES' }).first().click();
+  await expect(page).toHaveURL(/products\/beles/);
+  await expect(page.getByRole('link', { name: 'Открыть BELES' })).toHaveAttribute('href', 'https://beles.imds.kz');
+  await expect(page.getByRole('link', { name: 'Запросить демо' })).toHaveAttribute('href', '/contact');
+
+  await page.goto('/products/resto');
+  await expect(page.getByRole('link', { name: 'Запросить демо' })).toHaveAttribute('href', '/contact');
 });
 
 test('mobile navigation opens', async ({ page }) => {
