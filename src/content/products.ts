@@ -3,11 +3,11 @@ import type { ProductSlug } from '@/lib/site-config';
 export type ProductDefinition = {
   slug: ProductSlug; name: string; eyebrow: string; headline: string; summary: string;
   problem: string; solution: string; capabilities: string[]; workflow: string[]; outcomes: string[];
-  platformIntegration: string[]; faq: {q:string;a:string}[]; accent: string;
+  platformIntegration: string[]; faq: {q:string;a:string}[]; accent: string; appUrl?: string;
 };
 
-const p = (slug: ProductSlug, name: string, eyebrow: string, headline: string, summary: string, capabilities: string[], accent: string): ProductDefinition => ({
-  slug,name,eyebrow,headline,summary,accent,
+const p = (slug: ProductSlug, name: string, eyebrow: string, headline: string, summary: string, capabilities: string[], accent: string, appUrl?: string): ProductDefinition => ({
+  slug,name,eyebrow,headline,summary,accent,appUrl,
   problem: `Разрозненные процессы усложняют управление и замедляют принятие решений в зоне ответственности ${name}.`,
   solution: `${name} объединяет ключевые операции в одном продукте и работает как часть общей экосистемы IMDS.`,
   capabilities,
@@ -18,8 +18,8 @@ const p = (slug: ProductSlug, name: string, eyebrow: string, headline: string, s
 });
 
 export const products: ProductDefinition[] = [
-  p('beles','BELES','Маркетинг и коммерческая аналитика','Видеть рынок. Понимать клиента. Действовать быстрее.','Аналитика маркетинга, сигналы клиентов и лёгкий CRM-контур в одном рабочем пространстве.',['Маркетинговая аналитика','Лиды и CRM-контур','Каналы и кампании','Коммерческие сигналы'],'#20c2b0'),
-  p('mis','MIS','Управление организацией','Операционная система для сложной организации.','Филиалы, пользователи, расписание и ключевые операционные процессы в едином контуре.',['Организации и филиалы','Пользователи и роли','Расписание','Операционные модули'],'#0f766e'),
+  p('beles','BELES','Маркетинг и коммерческая аналитика','Видеть рынок. Понимать клиента. Действовать быстрее.','Аналитика маркетинга, сигналы клиентов и лёгкий CRM-контур в одном рабочем пространстве.',['Маркетинговая аналитика','Лиды и CRM-контур','Каналы и кампании','Коммерческие сигналы'],'#20c2b0','https://beles.imds.kz'),
+  p('mis','MIS','Управление организацией','Операционная система для сложной организации.','Филиалы, пользователи, расписание и ключевые операционные процессы в едином контуре.',['Организации и филиалы','Пользователи и роли','Расписание','Операционные модули'],'#0f766e','https://mis.imds.kz'),
   p('resto','IMDS Resto','Ресторанные операции','Операции ресторана — в одном потоке данных.','Мульти-ресторанная платформа для заказов, точек и интеграций, включая iiko.',['Рестораны и точки','Текущие заказы','iiko-интеграция','Операционная аналитика'],'#a86909'),
   p('omnichannel','Omnichannel','Коммуникации','Один контекст клиента во всех поддерживаемых каналах.','Единый слой клиентских коммуникаций и истории взаимодействий.',['Единый inbox','Контекст клиента','Маршрутизация','История коммуникаций'],'#2563a8'),
   p('analytics','Analytics','Данные и решения','Сквозная аналитика продуктов IMDS.','Управленческая и операционная аналитика на общих контрактах данных.',['Дашборды','Сводные показатели','Срезы по продуктам','Управленческие отчёты'],'#3b82f6'),
@@ -28,3 +28,5 @@ export const products: ProductDefinition[] = [
 ];
 
 export const productsBySlug = Object.fromEntries(products.map(x => [x.slug,x])) as Record<ProductSlug, ProductDefinition>;
+
+export const productHref = (product: ProductDefinition) => product.appUrl ?? `/products/${product.slug}`;
