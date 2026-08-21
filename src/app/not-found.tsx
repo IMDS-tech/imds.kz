@@ -1,0 +1,1 @@
+import Link from 'next/link';export default function NotFound(){return <section className="section"><div className="container page-hero"><div className="eyebrow">404</div><h1>Страница не найдена.</h1><p className="lead">Вернитесь к экосистеме IMDS.</p><Link className="button" href="/">На главную</Link></div></section>}

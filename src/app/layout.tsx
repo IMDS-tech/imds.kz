@@ -1,0 +1,3 @@
+import type { Metadata } from 'next';import './globals.css';import { Header } from '@/components/site/Header';import { Footer } from '@/components/site/Footer';import { siteConfig } from '@/lib/site-config';
+export const metadata: Metadata={metadataBase:new URL(siteConfig.origin),title:{default:'IMDS TECH — технологическая экосистема',template:'%s — IMDS TECH'},description:siteConfig.description,alternates:{canonical:'/'},openGraph:{type:'website',siteName:'IMDS TECH',title:'IMDS TECH',description:siteConfig.description,url:siteConfig.origin}};
+export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="ru"><body><Header/><main>{children}</main><Footer/></body></html>}
