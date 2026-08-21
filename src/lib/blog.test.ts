@@ -1,0 +1,1 @@
+import {describe,expect,it} from 'vitest';import {getAllPosts,getPostBySlug} from './blog';describe('blog',()=>{it('parses repository posts',()=>{const posts=getAllPosts();expect(posts.length).toBeGreaterThan(0);expect(posts[0].seoDescription).toBeTruthy()});it('finds a post by slug',()=>{expect(getPostBySlug('launching-imds-platform')?.title).toContain('IMDS Platform')})});
