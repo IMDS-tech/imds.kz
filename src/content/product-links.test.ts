@@ -1,15 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { productHref, productsBySlug } from './products';
+import { productActionHref, productCardHref, productsBySlug } from './products';
 
-describe('product live links', () => {
-  it('opens deployed products on their production URLs', () => {
-    expect(productHref(productsBySlug.beles)).toBe('https://beles.imds.kz');
-    expect(productHref(productsBySlug.mis)).toBe('https://mis.imds.kz');
+describe('product navigation', () => {
+  it('keeps every product card on its informational page', () => {
+    for (const slug of ['beles', 'mis', 'resto', 'omnichannel', 'analytics', 'ai', 'finance'] as const) {
+      expect(productCardHref(productsBySlug[slug])).toBe(`/products/${slug}`);
+    }
   });
 
-  it('keeps undeployed products on their informational pages', () => {
+  it('opens deployed products from the detail-page action', () => {
+    expect(productActionHref(productsBySlug.beles)).toBe('https://beles.imds.kz');
+    expect(productActionHref(productsBySlug.mis)).toBe('https://mis.imds.kz');
+  });
+
+  it('sends undeployed products to the demo request from the detail page', () => {
     for (const slug of ['resto', 'omnichannel', 'analytics', 'ai', 'finance'] as const) {
-      expect(productHref(productsBySlug[slug])).toBe(`/products/${slug}`);
+      expect(productActionHref(productsBySlug[slug])).toBe('/contact');
     }
   });
 });

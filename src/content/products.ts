@@ -29,4 +29,5 @@ export const products: ProductDefinition[] = [
 
 export const productsBySlug = Object.fromEntries(products.map(x => [x.slug,x])) as Record<ProductSlug, ProductDefinition>;
 
-export const productHref = (product: ProductDefinition) => product.appUrl ?? `/products/${product.slug}`;
+export const productCardHref = (product: ProductDefinition) => `/products/${product.slug}`;
+export const productActionHref = (product: ProductDefinition) => product.appUrl ?? '/contact';
