@@ -5,15 +5,18 @@ test('critical public journey', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
   await page.getByRole('link', { name: 'Смотреть продукты' }).click();
 
+  await expect(page.locator('img.product-logo')).toHaveCount(7);
   await expect(page.getByRole('link', { name: 'BELES' }).first()).toHaveAttribute('href', '/products/beles');
   await expect(page.getByRole('link', { name: 'MIS' }).first()).toHaveAttribute('href', '/products/mis');
 
   await page.getByRole('link', { name: 'BELES' }).first().click();
   await expect(page).toHaveURL(/products\/beles/);
+  await expect(page.locator('img.product-hero-logo')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Открыть BELES' })).toHaveAttribute('href', 'https://beles.imds.kz');
   await expect(page.getByRole('link', { name: 'Запросить демо' })).toHaveAttribute('href', '/contact');
 
   await page.goto('/products/resto');
+  await expect(page.locator('img.product-hero-logo')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Запросить демо' })).toHaveAttribute('href', '/contact');
 });
 
