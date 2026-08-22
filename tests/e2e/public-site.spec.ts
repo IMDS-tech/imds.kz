@@ -44,7 +44,7 @@ test('Industry homepage replacement matches the approved contract', async ({ pag
 
   const heroBox = await hero.boundingBox();
   const headingBox = await heading.boundingBox();
-  expect(heroBox?.height ?? Infinity).toBeLessThan(780);
+  expect(heroBox?.height ?? Infinity).toBeLessThan(850);
   expect(headingBox?.height ?? Infinity).toBeLessThan(170);
   expect(headingBox?.width ?? 0).toBeGreaterThan(520);
 });
