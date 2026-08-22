@@ -11,7 +11,7 @@ The site must feel like one continuous scene rather than a stack of unrelated re
 ## Experience Architecture
 
 ### 1. Full-page scene layer
-A fixed, viewport-sized React Three Fiber canvas sits behind the homepage content and remains mounted throughout the scroll journey.
+A fixed, viewport-sized native WebGL canvas sits behind the homepage content and remains mounted throughout the scroll journey.
 
 It owns:
 - central IMDS core;
@@ -19,20 +19,20 @@ It owns:
 - product nodes;
 - connection beams;
 - particles and depth haze;
-- camera movement tied to document scroll progress;
+- scene transforms tied to document scroll progress;
 - pointer-reactive parallax;
 - light intensity and environment changes across chapters.
 
-The scene is decorative and never replaces semantic HTML content.
+The scene is decorative and never replaces semantic HTML content. The implementation extends the native WebGL runtime already proven in production instead of introducing a large new 3D dependency stack.
 
 ### 2. Scroll chapters
 The homepage becomes six semantic chapters:
 1. **Origin / Hero** — IMDS core and headline.
-2. **Dive** — camera moves through the core into the ecosystem.
+2. **Dive** — scene dives through the core into the ecosystem.
 3. **Product constellation** — seven product nodes become the visual focus.
-4. **Product spotlight** — BELES and MIS are highlighted with live-product CTAs; the remaining products retain product-detail links.
+4. **Product spotlight** — BELES and MIS are highlighted; the remaining products retain product-detail links.
 5. **Platform network** — shared identity, contracts, data boundaries and integrations are visualized as connected infrastructure.
-6. **Final orbit** — camera pulls back to the full ecosystem and returns the foreground to a lighter conversion surface.
+6. **Final orbit** — scene pulls back to the full ecosystem and returns the foreground to a lighter conversion surface.
 
 Each chapter remains normal accessible HTML in the document flow. Visual animation is progressive enhancement.
 
@@ -45,7 +45,7 @@ Product logos remain the existing approved PNG assets.
 
 ### 4. Motion
 Desktop:
-- scroll-driven camera interpolation;
+- scroll-driven 3D scene interpolation;
 - slow orbital motion;
 - pointer parallax;
 - glow and depth response;
@@ -53,12 +53,11 @@ Desktop:
 
 Mobile:
 - reduced particle count;
-- simpler camera path;
-- shallower pointer/tilt effects;
-- no expensive post-processing.
+- simpler scene transforms;
+- shallower pointer/tilt effects.
 
 `prefers-reduced-motion: reduce`:
-- freezes camera choreography at stable compositions;
+- freezes scroll choreography at stable compositions;
 - disables continuous orbital movement and floating effects;
 - leaves all text and navigation fully usable.
 
@@ -70,26 +69,23 @@ Mobile:
 - light opening and closing sections so the experience retains IMDS corporate identity instead of becoming a permanently dark gaming interface.
 
 ### 6. Performance constraints
-- WebGL canvas is dynamically imported client-side.
-- Device pixel ratio is capped.
-- No heavy post-processing stack.
+- Use the existing native WebGL approach already in production.
+- Device pixel ratio is capped at 2.
+- No post-processing dependency stack.
 - Particle/node complexity is bounded and lowered on small screens.
 - Semantic content renders without waiting for WebGL.
 - If WebGL fails, the CSS background and content remain usable.
 
 ### 7. Technical stack
 - Next.js 16.3.1 / React 19.2.8 (existing)
-- `three`
-- `@react-three/fiber`
-- `@react-three/drei`
-- `gsap` for deterministic scroll/presentation choreography around DOM sections
+- native WebGL API through the existing client component pattern
+- native scroll/pointer listeners with requestAnimationFrame batching
+- CSS transforms and transitions for DOM depth effects
 
-No external hosted runtime or third-party rendering service is introduced.
+No new hosted service or external rendering runtime is introduced.
 
 ## Components
-- `src/components/cinematic/CinematicExperience.tsx` — client wrapper, scroll progress, reduced-motion and pointer state, fixed canvas mount.
-- `src/components/cinematic/CinematicScene.tsx` — R3F scene, camera path, particles, core, rings, product nodes and network.
-- `src/components/cinematic/ProductConstellation.tsx` — reusable 3D node layout using product definitions.
+- `src/components/cinematic/CinematicExperience.tsx` — fixed canvas, scroll progress, reduced-motion/pointer state and DOM scene overlays.
 - `src/components/home/Home.tsx` — semantic six-chapter homepage markup and existing product links.
 - `src/app/globals.css` — chapter layout, visual transitions, glass layers, 3D card states and responsive/reduced-motion rules.
 
