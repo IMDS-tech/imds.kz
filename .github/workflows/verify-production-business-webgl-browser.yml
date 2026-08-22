@@ -1,0 +1,65 @@
+name: Verify production business WebGL browser
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/verify-production-business-webgl-browser.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Verify live desktop hero at 2048x1152
+        run: |
+          node <<'NODE'
+          const { chromium } = require('@playwright/test');
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage({ viewport: { width: 2048, height: 1152 } });
+            const response = await page.goto('https://imds.kz', { waitUntil: 'networkidle', timeout: 60000 });
+            if (!response || !response.ok()) throw new Error(`homepage HTTP ${response && response.status()}`);
+
+            const hero = page.locator('[data-business-hero]');
+            const heading = page.getByRole('heading', { level: 1 });
+            const canvas = page.getByTestId('business-webgl');
+            await hero.waitFor({ state: 'visible' });
+            await canvas.waitFor({ state: 'visible' });
+            await page.waitForFunction(() => document.querySelector('[data-testid="business-webgl"]')?.getAttribute('data-webgl') === 'ready', null, { timeout: 10000 });
+
+            const heroLines = await page.locator('[data-hero-line]').count();
+            const cards = await page.locator('[data-business-product-card]').count();
+            const heroBox = await hero.boundingBox();
+            const headingBox = await heading.boundingBox();
+            const beles = await page.locator('[data-business-product-card]').first().getAttribute('href');
+            const mis = await page.locator('[data-business-product-card]').nth(1).getAttribute('href');
+
+            console.log(`webgl=${await canvas.getAttribute('data-webgl')}`);
+            console.log(`hero_lines=${heroLines}`);
+            console.log(`product_cards=${cards}`);
+            console.log(`hero=${JSON.stringify(heroBox)}`);
+            console.log(`heading=${JSON.stringify(headingBox)}`);
+            console.log(`beles_href=${beles}`);
+            console.log(`mis_href=${mis}`);
+
+            if (heroLines !== 2) throw new Error(`expected 2 controlled hero lines, got ${heroLines}`);
+            if (cards !== 7) throw new Error(`expected 7 product cards, got ${cards}`);
+            if (!heroBox || heroBox.height >= 900) throw new Error(`hero too tall: ${heroBox && heroBox.height}`);
+            if (!headingBox || headingBox.height >= 260) throw new Error(`heading too tall: ${headingBox && headingBox.height}`);
+            if (!headingBox || headingBox.width <= 620) throw new Error(`heading too narrow: ${headingBox && headingBox.width}`);
+            if (beles !== '/products/beles') throw new Error(`unexpected BELES href: ${beles}`);
+            if (mis !== '/products/mis') throw new Error(`unexpected MIS href: ${mis}`);
+
+            await browser.close();
+            console.log('production_business_webgl_browser=PASS');
+          })().catch(error => { console.error(error); process.exit(1); });
+          NODE
