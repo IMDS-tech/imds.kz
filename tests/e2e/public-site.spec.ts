@@ -20,11 +20,24 @@ test('critical public journey', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Запросить демо' })).toHaveAttribute('href', '/contact');
 });
 
-test('home exposes the full-page cinematic experience', async ({ page }) => {
+test('home exposes the polished full-page cinematic experience', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByTestId('cinematic-scene')).toBeVisible();
   await expect(page.locator('[data-cinematic-chapter]')).toHaveCount(6);
   await expect(page.locator('[data-3d-card="true"]')).toHaveCount(7);
+  await expect(page.locator('[data-product-node]')).toHaveCount(7);
+  await expect(page.getByTestId('cinematic-progress')).toBeVisible();
+  await expect(page.getByTestId('cursor-spotlight')).toBeVisible();
+  await expect(page.getByTestId('cinematic-scene')).toHaveAttribute('data-active-chapter', 'origin');
+});
+
+test('cinematic chapter state advances on scroll', async ({ page }) => {
+  await page.goto('/');
+  const scene = page.getByTestId('cinematic-scene');
+  await expect(scene).toHaveAttribute('data-active-chapter', 'origin');
+  await page.locator('[data-cinematic-chapter="products"]').scrollIntoViewIfNeeded();
+  await expect(scene).toHaveAttribute('data-active-chapter', 'products');
+  await expect(page.locator('[data-progress-item="products"]')).toHaveAttribute('data-active', 'true');
 });
 
 test('mobile navigation opens', async ({ page }) => {
