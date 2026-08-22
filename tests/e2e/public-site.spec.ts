@@ -20,36 +20,33 @@ test('critical public journey', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Запросить демо' })).toHaveAttribute('href', '/contact');
 });
 
-test('home exposes the business premium experience', async ({ page }) => {
-  await page.goto('/');
-  await expect(page.locator('[data-business-home]')).toBeVisible();
-  await expect(page.getByRole('heading', { level: 1, name: /Не набор сервисов\. Одна живая система\./ })).toBeVisible();
-  await expect(page.locator('[data-proof-bar]')).toBeVisible();
-  await expect(page.locator('[data-business-product-card]')).toHaveCount(7);
-  await expect(page.locator('[data-platform-layer]')).toHaveCount(4);
-  await expect(page.locator('[data-business-value]')).toHaveCount(4);
-  await expect(page.getByRole('link', { name: 'Запросить демо' }).first()).toHaveAttribute('href', '/contact');
-  await expect(page.getByRole('link', { name: 'Связаться с IMDS' })).toHaveAttribute('href', '/contact');
-});
-
-test('desktop hero is balanced and uses real WebGL', async ({ page }) => {
-  await page.setViewportSize({ width: 2048, height: 1330 });
+test('Industry homepage replacement matches the approved contract', async ({ page }) => {
+  await page.setViewportSize({ width: 2048, height: 1152 });
   await page.goto('/');
 
-  const hero = page.locator('[data-business-hero]');
+  const home = page.locator('[data-industry-home]');
+  const hero = page.locator('[data-industry-hero]');
   const heading = page.getByRole('heading', { level: 1 });
-  const canvas = page.getByTestId('business-webgl');
+  const canvases = page.getByTestId('business-webgl');
 
+  await expect(home).toBeVisible();
   await expect(hero).toBeVisible();
-  await expect(canvas).toBeVisible();
-  await expect(canvas).toHaveAttribute('data-webgl', 'ready');
+  await expect(canvases).toHaveCount(2);
+  await expect(canvases.nth(0)).toHaveAttribute('data-webgl', 'ready');
+  await expect(canvases.nth(1)).toHaveAttribute('data-webgl', 'ready');
   await expect(page.locator('[data-hero-line]')).toHaveCount(2);
+  await expect(page.locator('[data-industry-product-card]')).toHaveCount(7);
+  await expect(page.locator('[data-platform-plane]')).toHaveCount(3);
+  await expect(page.locator('[data-industry-value]')).toHaveCount(4);
+  await expect(page.locator('[data-final-cta]')).toBeVisible();
+  await expect(page.locator('[data-industry-product-card]').first()).toHaveAttribute('href', '/products/beles');
+  await expect(page.locator('[data-industry-product-card]').nth(1)).toHaveAttribute('href', '/products/mis');
 
   const heroBox = await hero.boundingBox();
   const headingBox = await heading.boundingBox();
-  expect(heroBox?.height ?? Infinity).toBeLessThan(900);
-  expect(headingBox?.height ?? Infinity).toBeLessThan(260);
-  expect(headingBox?.width ?? 0).toBeGreaterThan(620);
+  expect(heroBox?.height ?? Infinity).toBeLessThan(780);
+  expect(headingBox?.height ?? Infinity).toBeLessThan(170);
+  expect(headingBox?.width ?? 0).toBeGreaterThan(520);
 });
 
 test('home preserves product detail routing', async ({ page }) => {
