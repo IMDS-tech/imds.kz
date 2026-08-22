@@ -2,6 +2,9 @@
 
 import { useEffect, useRef } from 'react';
 
+const CHAPTERS=['origin','dive','products','spotlight','platform','final'] as const;
+const PRODUCT_NODES=['beles','mis','resto','omnichannel','analytics','ai','finance'] as const;
+
 const vertexShader = `
 attribute vec3 aPosition;
 attribute float aSize;
@@ -85,6 +88,33 @@ export function CinematicExperience(){
     if(!root||!canvas)return;
     const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const small=window.matchMedia('(max-width: 700px)').matches;
+    const chapters=Array.from(document.querySelectorAll<HTMLElement>('[data-cinematic-chapter]'));
+    const cards=Array.from(document.querySelectorAll<HTMLElement>('[data-3d-card="true"]'));
+
+    let activeChapter='origin';
+    const setActiveChapter=(chapter:string)=>{
+      if(activeChapter===chapter&&root.dataset.activeChapter===chapter)return;
+      activeChapter=chapter;
+      root.dataset.activeChapter=chapter;
+      chapters.forEach(section=>{section.dataset.active=section.dataset.cinematicChapter===chapter?'true':'false';});
+      root.querySelectorAll<HTMLElement>('[data-progress-item]').forEach(item=>{item.dataset.active=item.dataset.progressItem===chapter?'true':'false';});
+    };
+    const readActiveChapter=()=>{
+      const center=window.innerHeight*.5;
+      let winner=chapters[0];
+      let distance=Number.POSITIVE_INFINITY;
+      chapters.forEach(section=>{
+        const rect=section.getBoundingClientRect();
+        const visible=rect.bottom>0&&rect.top<window.innerHeight;
+        if(!visible)return;
+        const sectionCenter=Math.max(rect.top,0)+Math.min(rect.height,window.innerHeight)/2;
+        const candidate=Math.abs(sectionCenter-center);
+        if(candidate<distance){distance=candidate;winner=section;}
+      });
+      if(winner?.dataset.cinematicChapter)setActiveChapter(winner.dataset.cinematicChapter);
+    };
+    setActiveChapter('origin');
+
     const gl=canvas.getContext('webgl',{alpha:true,antialias:true,premultipliedAlpha:false});
     if(!gl){root.dataset.webgl='fallback';return;}
 
@@ -118,14 +148,42 @@ export function CinematicExperience(){
       const max=Math.max(document.documentElement.scrollHeight-window.innerHeight,1);
       targetScroll=Math.min(1,Math.max(0,window.scrollY/max));
       root.style.setProperty('--cinematic-progress',String(targetScroll));
+      readActiveChapter();
     };
     const onPointer=(event:PointerEvent)=>{
       targetPointer.x=(event.clientX/window.innerWidth-.5)*.75;
       targetPointer.y=-(event.clientY/window.innerHeight-.5)*.55;
+      const x=`${(event.clientX/window.innerWidth)*100}%`;
+      const y=`${(event.clientY/window.innerHeight)*100}%`;
+      root.style.setProperty('--cursor-x',x);
+      root.style.setProperty('--cursor-y',y);
+      document.documentElement.style.setProperty('--cinematic-cursor-x',x);
+      document.documentElement.style.setProperty('--cinematic-cursor-y',y);
     };
     window.addEventListener('scroll',readScroll,{passive:true});
+    window.addEventListener('resize',readActiveChapter,{passive:true});
     window.addEventListener('pointermove',onPointer,{passive:true});
     readScroll();
+
+    const cardCleanups=cards.map(card=>{
+      const onCardPointer=(event:PointerEvent)=>{
+        if(reduced||small)return;
+        const rect=card.getBoundingClientRect();
+        const x=(event.clientX-rect.left)/Math.max(rect.width,1);
+        const y=(event.clientY-rect.top)/Math.max(rect.height,1);
+        card.style.setProperty('--tilt-y',`${(x-.5)*10}deg`);
+        card.style.setProperty('--tilt-x',`${(.5-y)*9}deg`);
+        card.style.setProperty('--card-light-x',`${x*100}%`);
+        card.style.setProperty('--card-light-y',`${y*100}%`);
+      };
+      const resetCard=()=>{
+        card.style.setProperty('--tilt-y','0deg');
+        card.style.setProperty('--tilt-x','0deg');
+      };
+      card.addEventListener('pointermove',onCardPointer);
+      card.addEventListener('pointerleave',resetCard);
+      return()=>{card.removeEventListener('pointermove',onCardPointer);card.removeEventListener('pointerleave',resetCard);};
+    });
 
     const resize=()=>{
       const ratio=Math.min(window.devicePixelRatio||1,small?1.35:2);
@@ -156,19 +214,24 @@ export function CinematicExperience(){
     return()=>{
       cancelAnimationFrame(frame);
       window.removeEventListener('scroll',readScroll);
+      window.removeEventListener('resize',readActiveChapter);
       window.removeEventListener('pointermove',onPointer);
+      cardCleanups.forEach(cleanup=>cleanup());
       gl.deleteBuffer(buffer);gl.deleteProgram(program);gl.deleteShader(vs);gl.deleteShader(fs);
     };
   },[]);
 
-  return <div ref={rootRef} className="cinematic-scene" data-testid="cinematic-scene" aria-hidden="true">
+  return <div ref={rootRef} className="cinematic-scene" data-testid="cinematic-scene" data-active-chapter="origin" aria-hidden="true">
     <canvas ref={canvasRef} className="cinematic-canvas" />
+    <div className="cursor-spotlight" data-testid="cursor-spotlight" />
     <div className="cinematic-vignette" />
     <div className="cinematic-core"><span>IMDS</span><i /></div>
     <div className="cinematic-orbit orbit-one" />
     <div className="cinematic-orbit orbit-two" />
     <div className="cinematic-orbit orbit-three" />
-    <div className="cinematic-node node-one" /><div className="cinematic-node node-two" /><div className="cinematic-node node-three" />
-    <div className="cinematic-node node-four" /><div className="cinematic-node node-five" /><div className="cinematic-node node-six" /><div className="cinematic-node node-seven" />
+    {PRODUCT_NODES.map((product,index)=><div key={product} className={`cinematic-node node-${index+1}`} data-product-node={product} />)}
+    <div className="cinematic-progress" data-testid="cinematic-progress">
+      {CHAPTERS.map((chapter,index)=><span key={chapter} data-progress-item={chapter} data-active={chapter==='origin'?'true':'false'}><b>{String(index+1).padStart(2,'0')}</b><i /></span>)}
+    </div>
   </div>;
 }
