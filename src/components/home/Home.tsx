@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { BusinessHeroScene } from '@/components/business/BusinessHeroScene';
 import { productCardHref, products } from '@/content/products';
 
 const proofItems = ['Self-hosted', 'PostgreSQL', 'Unified SSO', 'API-first', 'GitHub CI/CD'];
@@ -21,11 +22,14 @@ const businessValues = [
 export function Home() {
   return (
     <main className="business-home" data-business-home>
-      <section className="business-hero">
-        <div className="business-hero-grid container">
+      <section className="business-hero" data-business-hero>
+        <div className="business-hero-grid business-hero-container">
           <div className="business-hero-copy">
             <div className="business-eyebrow">Единая экосистема для роста бизнеса</div>
-            <h1>Не набор сервисов. <span>Одна живая система.</span></h1>
+            <h1>
+              <span className="hero-line hero-line-primary" data-hero-line>Не набор сервисов.</span>
+              <span className="hero-line hero-line-accent" data-hero-line>Одна живая система.</span>
+            </h1>
             <p className="business-lead">
               IMDS объединяет продукты, данные, права доступа и API в одну технологическую среду — чтобы бизнес управлял процессами из единого контекста.
             </p>
@@ -40,18 +44,8 @@ export function Home() {
             </div>
           </div>
 
-          <div className="business-hero-visual" aria-hidden="true">
-            <div className="business-globe" />
-            <div className="business-orbit orbit-a" />
-            <div className="business-orbit orbit-b" />
-            <div className="business-orbit orbit-c" />
-            <div className="business-hero-node node-a" />
-            <div className="business-hero-node node-b" />
-            <div className="business-hero-node node-c" />
-            <div className="business-logo-stage">
-              <Image src="/imds-brand-mark.svg" alt="" width={430} height={430} priority />
-            </div>
-            <div className="business-platform-rings"><i/><i/><i/><i/></div>
+          <div className="business-hero-visual">
+            <BusinessHeroScene />
           </div>
         </div>
       </section>

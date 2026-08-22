@@ -32,6 +32,26 @@ test('home exposes the business premium experience', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Связаться с IMDS' })).toHaveAttribute('href', '/contact');
 });
 
+test('desktop hero is balanced and uses real WebGL', async ({ page }) => {
+  await page.setViewportSize({ width: 2048, height: 1330 });
+  await page.goto('/');
+
+  const hero = page.locator('[data-business-hero]');
+  const heading = page.getByRole('heading', { level: 1 });
+  const canvas = page.getByTestId('business-webgl');
+
+  await expect(hero).toBeVisible();
+  await expect(canvas).toBeVisible();
+  await expect(canvas).toHaveAttribute('data-webgl', 'ready');
+  await expect(page.locator('[data-hero-line]')).toHaveCount(2);
+
+  const heroBox = await hero.boundingBox();
+  const headingBox = await heading.boundingBox();
+  expect(heroBox?.height ?? Infinity).toBeLessThan(900);
+  expect(headingBox?.height ?? Infinity).toBeLessThan(260);
+  expect(headingBox?.width ?? 0).toBeGreaterThan(620);
+});
+
 test('home preserves product detail routing', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('[data-business-product-card]').first()).toHaveAttribute('href', '/products/beles');
