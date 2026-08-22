@@ -61,6 +61,7 @@ void main(){
 type Geometry = { pos: number[]; seed: number[]; count: number };
 type MergedGeometry = Geometry & { spans: Array<[number, number]> };
 type SceneLayer = 'back' | 'front';
+type ProgramBundle = { program: WebGLProgram; vertex: WebGLShader; fragment: WebGLShader };
 
 function field(count: number, rIn: number, rOut: number): Geometry {
   const pos: number[] = [];
@@ -117,7 +118,7 @@ function compile(gl: WebGLRenderingContext, type: number, source: string) {
   return shader;
 }
 
-function createProgram(gl: WebGLRenderingContext, fragmentSource: string) {
+function createProgram(gl: WebGLRenderingContext, fragmentSource: string): ProgramBundle | null {
   const vertex = compile(gl, gl.VERTEX_SHADER, vertexShader);
   const fragment = compile(gl, gl.FRAGMENT_SHADER, fragmentSource);
   if (!vertex || !fragment) return null;
@@ -149,35 +150,40 @@ function mountLayer(
   host: HTMLElement,
   onPointer?: (x: number, y: number) => void,
 ) {
-  const gl = canvas.getContext('webgl', {
+  const context = canvas.getContext('webgl', {
     alpha: true,
     antialias: true,
     premultipliedAlpha: false,
     powerPreference: 'low-power',
   });
-  if (!gl) {
+  if (!context) {
     canvas.dataset.webgl = 'unavailable';
     return () => undefined;
   }
+  const gl: WebGLRenderingContext = context;
 
-  const pointBundle = createProgram(gl, pointFragmentShader);
-  const lineBundle = createProgram(gl, lineFragmentShader);
-  if (!pointBundle || !lineBundle) {
+  const pointProgram = createProgram(gl, pointFragmentShader);
+  const lineProgram = createProgram(gl, lineFragmentShader);
+  if (!pointProgram || !lineProgram) {
     canvas.dataset.webgl = 'fallback';
     return () => undefined;
   }
+  const pointBundle: ProgramBundle = pointProgram;
+  const lineBundle: ProgramBundle = lineProgram;
 
   const mobile = window.matchMedia('(max-width: 760px)').matches;
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const dotCount = mobile ? (layer === 'front' ? 26 : 90) : layer === 'front' ? 70 : 260;
   const dpr = Math.min(window.devicePixelRatio || 1, mobile ? 1.25 : 2);
   const dots = layer === 'front' ? field(dotCount, 1.9, 2.6) : field(dotCount, 1.15, 2.35);
-  const pointPosition = createBuffer(gl, dots.pos);
-  const pointSeed = createBuffer(gl, dots.seed);
-  if (!pointPosition || !pointSeed) {
+  const createdPointPosition = createBuffer(gl, dots.pos);
+  const createdPointSeed = createBuffer(gl, dots.seed);
+  if (!createdPointPosition || !createdPointSeed) {
     canvas.dataset.webgl = 'fallback';
     return () => undefined;
   }
+  const pointPosition: WebGLBuffer = createdPointPosition;
+  const pointSeed: WebGLBuffer = createdPointSeed;
 
   let lines: MergedGeometry | null = null;
   let linePosition: WebGLBuffer | null = null;
