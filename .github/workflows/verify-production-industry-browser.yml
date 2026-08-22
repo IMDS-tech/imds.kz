@@ -1,0 +1,94 @@
+name: Verify production Industry browser
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/verify-production-industry-browser.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Verify live Industry desktop and mobile
+        run: |
+          node <<'NODE'
+          const { chromium } = require('@playwright/test');
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+
+            const desktop = await browser.newPage({ viewport: { width: 2048, height: 1152 } });
+            const response = await desktop.goto('https://imds.kz', { waitUntil: 'networkidle', timeout: 60000 });
+            if (!response || !response.ok()) throw new Error(`desktop homepage HTTP ${response && response.status()}`);
+
+            const home = desktop.locator('[data-industry-home]');
+            const hero = desktop.locator('[data-industry-hero]');
+            const heading = desktop.getByRole('heading', { level: 1 });
+            const canvases = desktop.getByTestId('business-webgl');
+            await home.waitFor({ state: 'visible' });
+            await hero.waitFor({ state: 'visible' });
+            if (await canvases.count() !== 2) throw new Error(`expected 2 WebGL canvases, got ${await canvases.count()}`);
+            await desktop.waitForFunction(() => {
+              const nodes = [...document.querySelectorAll('[data-testid="business-webgl"]')];
+              return nodes.length === 2 && nodes.every(node => node.getAttribute('data-webgl') === 'ready');
+            }, null, { timeout: 12000 });
+
+            const heroLines = await desktop.locator('[data-hero-line]').count();
+            const cards = await desktop.locator('[data-industry-product-card]').count();
+            const planes = await desktop.locator('[data-platform-plane]').count();
+            const values = await desktop.locator('[data-industry-value]').count();
+            const heroBox = await hero.boundingBox();
+            const headingBox = await heading.boundingBox();
+            const beles = await desktop.locator('[data-industry-product-card]').first().getAttribute('href');
+            const mis = await desktop.locator('[data-industry-product-card]').nth(1).getAttribute('href');
+
+            console.log(`desktop_webgl=${await canvases.nth(0).getAttribute('data-webgl')},${await canvases.nth(1).getAttribute('data-webgl')}`);
+            console.log(`hero_lines=${heroLines}`);
+            console.log(`product_cards=${cards}`);
+            console.log(`platform_planes=${planes}`);
+            console.log(`industry_values=${values}`);
+            console.log(`hero=${JSON.stringify(heroBox)}`);
+            console.log(`heading=${JSON.stringify(headingBox)}`);
+            console.log(`beles_href=${beles}`);
+            console.log(`mis_href=${mis}`);
+
+            if (heroLines !== 2) throw new Error(`expected 2 hero lines, got ${heroLines}`);
+            if (cards !== 7) throw new Error(`expected 7 product cards, got ${cards}`);
+            if (planes !== 3) throw new Error(`expected 3 platform planes, got ${planes}`);
+            if (values !== 4) throw new Error(`expected 4 value cards, got ${values}`);
+            if (!heroBox || heroBox.height >= 850) throw new Error(`hero too tall: ${heroBox && heroBox.height}`);
+            if (!headingBox || headingBox.height >= 170) throw new Error(`heading too tall: ${headingBox && headingBox.height}`);
+            if (!headingBox || headingBox.width <= 520) throw new Error(`heading too narrow: ${headingBox && headingBox.width}`);
+            if (beles !== '/products/beles') throw new Error(`unexpected BELES href: ${beles}`);
+            if (mis !== '/products/mis') throw new Error(`unexpected MIS href: ${mis}`);
+
+            const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
+            const mobileResponse = await mobile.goto('https://imds.kz', { waitUntil: 'networkidle', timeout: 60000 });
+            if (!mobileResponse || !mobileResponse.ok()) throw new Error(`mobile homepage HTTP ${mobileResponse && mobileResponse.status()}`);
+            const menu = mobile.getByRole('button', { name: 'Меню' });
+            await menu.click();
+            if (await menu.getAttribute('aria-expanded') !== 'true') throw new Error('mobile menu did not open');
+            await mobile.getByRole('navigation', { name: 'Мобильная навигация' }).waitFor({ state: 'visible' });
+            const mobileCards = await mobile.locator('[data-industry-product-card]').count();
+            const mobileCanvases = mobile.getByTestId('business-webgl');
+            await mobile.waitForFunction(() => {
+              const nodes = [...document.querySelectorAll('[data-testid="business-webgl"]')];
+              return nodes.length === 2 && nodes.every(node => node.getAttribute('data-webgl') === 'ready');
+            }, null, { timeout: 12000 });
+            console.log(`mobile_cards=${mobileCards}`);
+            console.log(`mobile_webgl=${await mobileCanvases.nth(0).getAttribute('data-webgl')},${await mobileCanvases.nth(1).getAttribute('data-webgl')}`);
+            if (mobileCards !== 7) throw new Error(`mobile expected 7 cards, got ${mobileCards}`);
+
+            await browser.close();
+            console.log('production_industry_browser=PASS');
+          })().catch(error => { console.error(error); process.exit(1); });
+          NODE
