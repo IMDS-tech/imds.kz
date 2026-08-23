@@ -1,0 +1,67 @@
+name: Control Plane Live Audit
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/control-plane-live-audit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  external-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: DNS resolution
+        shell: bash
+        run: |
+          set -u
+          for host in app.imds.kz auth.imds.kz superadmin.imds.kz marketing.imds.kz mis.imds.kz beles.imds.kz; do
+            echo "=== DNS $host ==="
+            getent ahostsv4 "$host" || true
+          done
+
+      - name: Control node TCP reachability
+        shell: bash
+        run: |
+          set -u
+          host=89.207.250.55
+          for port in 22 80 443 8080 8788 8789; do
+            if timeout 5 bash -c "</dev/tcp/$host/$port" 2>/dev/null; then
+              echo "TCP $host:$port OPEN"
+            else
+              echo "TCP $host:$port CLOSED_OR_FILTERED"
+            fi
+          done
+
+      - name: HTTP and HTTPS endpoints
+        shell: bash
+        run: |
+          set -u
+          urls=(
+            'http://89.207.250.55:8080/'
+            'http://89.207.250.55:8788/'
+            'http://89.207.250.55:8789/healthz'
+            'https://app.imds.kz/'
+            'https://auth.imds.kz/healthz'
+            'https://superadmin.imds.kz/'
+          )
+          for url in "${urls[@]}"; do
+            echo "=== HTTP $url ==="
+            curl -k -sS -L --max-time 10 -o /tmp/body -D /tmp/headers -w 'http_code=%{http_code} remote_ip=%{remote_ip} total=%{time_total}\n' "$url" || true
+            sed -n '1,20p' /tmp/headers 2>/dev/null || true
+            head -c 300 /tmp/body 2>/dev/null | tr '\n' ' ' || true
+            echo
+          done
+
+      - name: TLS certificates
+        shell: bash
+        run: |
+          set -u
+          for host in app.imds.kz auth.imds.kz superadmin.imds.kz; do
+            echo "=== TLS $host ==="
+            timeout 10 openssl s_client -connect "$host:443" -servername "$host" </dev/null 2>/dev/null \
+              | openssl x509 -noout -subject -issuer -dates -ext subjectAltName 2>/dev/null || true
+          done
