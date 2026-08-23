@@ -10,6 +10,44 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: External IMDS control-plane audit probe
+        shell: bash
+        run: |
+          set -u
+          echo '=== DNS ==='
+          for host in app.imds.kz auth.imds.kz superadmin.imds.kz marketing.imds.kz mis.imds.kz beles.imds.kz; do
+            echo "--- $host"
+            getent ahostsv4 "$host" || true
+          done
+          echo '=== TCP ==='
+          host=89.207.250.55
+          for port in 22 80 443 8080 8788 8789; do
+            if timeout 5 bash -c "</dev/tcp/$host/$port" 2>/dev/null; then
+              echo "TCP $host:$port OPEN"
+            else
+              echo "TCP $host:$port CLOSED_OR_FILTERED"
+            fi
+          done
+          echo '=== HTTP ==='
+          for url in \
+            'http://89.207.250.55:8080/' \
+            'http://89.207.250.55:8788/' \
+            'http://89.207.250.55:8789/healthz' \
+            'https://app.imds.kz/' \
+            'https://auth.imds.kz/healthz' \
+            'https://superadmin.imds.kz/'; do
+            echo "--- $url"
+            curl -k -sS -L --max-time 10 -o /tmp/audit-body -D /tmp/audit-headers -w 'http_code=%{http_code} remote_ip=%{remote_ip} total=%{time_total}\n' "$url" || true
+            sed -n '1,12p' /tmp/audit-headers 2>/dev/null || true
+            head -c 240 /tmp/audit-body 2>/dev/null | tr '\n' ' ' || true
+            echo
+          done
+          echo '=== TLS ==='
+          for host in app.imds.kz auth.imds.kz superadmin.imds.kz; do
+            echo "--- $host"
+            timeout 10 openssl s_client -connect "$host:443" -servername "$host" </dev/null 2>/dev/null \
+              | openssl x509 -noout -subject -issuer -dates 2>/dev/null || true
+          done
       - uses: actions/setup-node@v4
         with:
           node-version: 24
